@@ -76,13 +76,17 @@ public class Sprite {
     }
 
     public void draw(float[] mProjectionMatrix, float[] mViewMatrix, float[] mModelMatrix) {
-        /*Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.scaleM(mModelMatrix, 0, 2.0f, 2.0f, 0.0f);
-        Matrix.translateM(mModelMatrix, 0, 200.0f, -200.0f, 0.0f);
-        Matrix.rotateM(mModelMatrix, 0, 20.0f, 0.0f, 0.0f, 1.0f);*/
+        if (!this.visible)
+            return;
 
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, this.posX, -this.posY, 0.0f);
+        if(isRotated || isSized){
+            Matrix.translateM(mModelMatrix, 0, posX+Width/2, -posY-Height/2, 0.0f);
+            if(isRotated) Matrix.rotateM(mModelMatrix, 0, rotation, 0.0f, 0.0f, 1.0f);
+            if(isSized) Matrix.scaleM(mModelMatrix, 0, ResizeX, ResizeY, 0.0f);
+            Matrix.translateM(mModelMatrix, 0, -Width/2, +Height/2, 0.0f);}
+        else{
+            Matrix.translateM(mModelMatrix, 0, posX, -posY, 0.0f);}
 
         float[] mvpMatrix = new float[16];
         Matrix.multiplyMM(mvpMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);

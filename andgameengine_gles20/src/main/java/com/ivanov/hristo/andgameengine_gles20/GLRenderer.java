@@ -57,7 +57,11 @@ public abstract class GLRenderer implements Renderer {
         mSquare1   = new Sprite(100.0f, 100.0f, 40.0f, 40.0f);
         mSquare2   = new Sprite(400.0f, 400.0f, 40.0f, 40.0f);
         mSquare1.setVel(20.0f, 0.0f);
-        //mSquare2.setVel(-0.1f, 0.0f);
+        mSquare2.setVel(-10.0f, 0.0f);
+        mSquare2.isRotated=true;
+        mSquare2.isSized=true;
+        mSquare2.ResizeX=2.0f;
+        mSquare2.rotation=20.0f;
     }
 
     @Override
