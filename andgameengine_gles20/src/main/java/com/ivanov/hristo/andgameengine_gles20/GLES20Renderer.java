@@ -8,8 +8,8 @@ import android.content.Context;
 
 public class GLES20Renderer extends GLRenderer {
 
-    public GLES20Renderer(Context contxt, int width, int height){
-        super(contxt, width, height);
+    public GLES20Renderer(Context contxt, int device_width, int device_height, int width, int height){
+        super(contxt, device_width, device_height, width, height);
     }
 
     @Override

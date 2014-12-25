@@ -9,6 +9,7 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.opengl.GLSurfaceView.Renderer;
+import android.view.MotionEvent;
 
 import android.util.Log;
 import com.ivanov.hristo.andgameengine_gles20.util.Util;
@@ -23,7 +24,8 @@ public abstract class GLRenderer implements Renderer {
 
     private int Width;
     private int Height;
-
+    private float deviceRelationX;
+    private float deviceRelationY;
 
     private float[] mModelMatrix = new float[16];
     private float[] mViewMatrix = new float[16];
@@ -35,17 +37,19 @@ public abstract class GLRenderer implements Renderer {
 
     private ArrayList<Sprite> sprites;
     private Object spritesNotInUse = new Object();
+    private ArrayList<Button> buttons;
+    private Object buttonsNotInUse=new Object();
 
-
-    private Sprite   mSquare1;
-    private Sprite   mSquare2;
-    public GLRenderer(Context contxt, int width, int height) {
+    public GLRenderer(Context contxt, int device_width, int device_height, int width, int height) {
         this.contxt=contxt;
         this.fpsLogger=new FPSLogger();
         this.Width=width;
         this.Height=height;
+        this.deviceRelationX=((float)this.Width)/device_width;
+        this.deviceRelationY=((float)this.Height)/device_height;
 
         this.sprites=new ArrayList<Sprite>();
+        this.buttons=new ArrayList<Button>();
     }
 
     @Override
@@ -69,14 +73,6 @@ public abstract class GLRenderer implements Renderer {
 
         this.loadTextures();
         this.onCreate();
-        /*Texture text1=new Texture(this.contxt, "drawable/ic_launcher");
-        Texture text2=new Texture(this.contxt, "drawable/nave_128");
-        mSquare1   = new Sprite(mProgram_Sprite, 100.0f, 100.0f, 100.0f, 100.0f, text1);
-        mSquare2   = new Sprite(mProgram_Sprite, 400.0f, 100.0f, 100.0f, 100.0f, text2);
-        mSquare1.setVel(20.0f, 0.0f);
-        mSquare2.setVel(-10.0f, 0.0f);
-        mSquare2.isRotated=true;
-        mSquare2.rotation=20.0f;*/
     }
 
     @Override
@@ -91,7 +87,7 @@ public abstract class GLRenderer implements Renderer {
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         Matrix.setLookAtM(mViewMatrix, 0, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
-        Matrix.orthoM(mProjectionMatrix, 0, -100f, this.Width, -this.Height, 100f, 1.0f, -1.0f); //TODO  100 --> 0
+        Matrix.orthoM(mProjectionMatrix, 0, 0.0f, this.Width, -this.Height, 0.0f, 1.0f, -1.0f); //TODO  100 --> 0
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
 
         startTime = System.nanoTime();
@@ -117,6 +113,13 @@ public abstract class GLRenderer implements Renderer {
                     sprite.update(deltaTime);
                 }
             }
+            synchronized(buttonsNotInUse){
+                Iterator<Button> it=this.buttons.iterator();
+                while(it.hasNext()){
+                    Button button=it.next();
+                    button.update(deltaTime);
+                }
+            }
         this.onUpdate(deltaTime);
     }
 
@@ -128,6 +131,40 @@ public abstract class GLRenderer implements Renderer {
                 sprite.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
             }
         }
+
+        synchronized(buttonsNotInUse){
+            Iterator<Button> it=this.buttons.iterator();
+            while(it.hasNext()){
+                Button button=it.next();
+                button.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
+            }
+        }
+    }
+
+    protected void ONTouch(MotionEvent event){
+        float PosX=event.getRawX()*this.deviceRelationX;
+        float PosY=event.getRawY()*this.deviceRelationY;
+        int type = event.getAction();
+        boolean handled=false;
+        switch (type) {
+            case MotionEvent.ACTION_DOWN:   // finger makes contact with the screen.
+                synchronized(buttonsNotInUse){
+                    Iterator<Button> it=this.buttons.iterator();
+                    while(it.hasNext()){
+                        Button button=it.next();
+                        if(button.press(PosX, PosY)){
+                            handled=true;
+                        }
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:   // finger moves on the screen.
+                break;
+            case MotionEvent.ACTION_UP:     // finger leaves the screen.
+                break;
+        }
+        if (!handled)onTouch(type,PosX,PosY);
+
     }
 
     public void attach(Sprite sprite){
@@ -142,6 +179,18 @@ public abstract class GLRenderer implements Renderer {
         }
     }
 
+    public void attach(Button button){
+        button.setmProgram(this.mProgram_Sprite);
+        synchronized(buttonsNotInUse){
+            this.buttons.add(button);
+        }
+    }
+    public void dettach(Button button){
+        synchronized(buttonsNotInUse){
+            this.buttons.remove(button);
+        }
+    }
+
     public void setColorBackGround(float red,float green,float blue){
         GLES20.glClearColor(red, green, blue, 1);
     }
@@ -150,13 +199,17 @@ public abstract class GLRenderer implements Renderer {
         return new Texture(this.contxt, file_name);
     }
 
-    /*public Sprite createSprite(float posX, float posY, float width, float height, Texture texture){
-        return new Sprite(this.mProgram_Sprite, posX, posY, width, height, texture);
-    }*/
+    public void finish(){
+        GLES20Activity aux = (GLES20Activity) contxt;
+        aux.finish();
+    }
 
+
+    //Methods meant to be overwritten
     public abstract void loadTextures();
     public abstract void onCreate();
     public abstract void onUpdate(float deltaTime);
+    public void onTouch(int type,float X, float Y){}
 
 
     public static void checkGlError(String glOperation) {

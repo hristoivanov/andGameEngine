@@ -12,13 +12,17 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.MotionEvent;
+import android.graphics.Point;
 
 import com.ivanov.hristo.andgameengine_gles20.util.Util;
 
 public abstract class GLES20Activity extends Activity {
 
-    private GLSurfaceView mSurfaceView;
     private GLSurfaceView mGLView;
+    private GLES20Renderer mRenderer;
+    public int DeviceWidth;
+    public int DeviceHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,10 +36,22 @@ public abstract class GLES20Activity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         if (hasGLES20()) {
-            mGLView = new GLSurfaceView(this);
+            mGLView = new GLSurfaceView(this){
+                @Override
+                public boolean onTouchEvent(MotionEvent event) {
+                    try{
+                        mRenderer.ONTouch(event);
+                    }catch(NullPointerException exc ){
+                        Log.d("OnTouch"," NullPointerException");
+                    }
+                    return true;
+                }
+            };
+            this.loadDeviceDimensions();
+            this.mRenderer=gameRenderer();
             mGLView.setEGLContextClientVersion(2);
             mGLView.setPreserveEGLContextOnPause(true);
-            mGLView.setRenderer(gameRenderer());
+            mGLView.setRenderer(this.mRenderer);
         } else {
             Log.d(Util.LOG_TAG, "Yolo bitch no GLES20");
             return;
@@ -53,28 +69,27 @@ public abstract class GLES20Activity extends Activity {
         return info.reqGlEsVersion >= 0x20000;
     }
 
+    protected void loadDeviceDimensions(){
+        Point size = new Point();//Calcular Width y Height.
+        WindowManager w = getWindowManager();
+        w.getDefaultDisplay().getSize(size);
+        DeviceWidth = size.x;
+        DeviceHeight = size.y;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        /*
-         * The activity must call the GL surface view's
-         * onResume() on activity onResume().
-         */
-        if (mSurfaceView != null) {
-            mSurfaceView.onResume();
+        if (mGLView != null) {
+            mGLView.onResume();
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-
-        /*
-         * The activity must call the GL surface view's
-         * onPause() on activity onPause().
-         */
-        if (mSurfaceView != null) {
-            mSurfaceView.onPause();
+        if (mGLView != null) {
+            mGLView.onPause();
         }
     }
 }
