@@ -57,14 +57,7 @@ public class Sprite {
         this.Height = height;
         this.texture=texture;
 
-        ByteBuffer bb = ByteBuffer.allocateDirect(BYTES_PER_SQUARE);
-        bb.order(ByteOrder.nativeOrder());
-        vertexBuffer = bb.asFloatBuffer();
-        vertexBuffer.put(   new float[]{    0,          0-height,
-                                            0+width,    0-height,
-                                            0+width,    0,
-                                            0,          0               });
-        vertexBuffer.position(0);
+        this.load_vertices();
 
         ByteBuffer dlb = ByteBuffer.allocateDirect(BYTES_PER_ORDER);
         dlb.order(ByteOrder.nativeOrder());
@@ -82,7 +75,18 @@ public class Sprite {
         textureBuffer.position(0);
     }
 
-    public void draw(float[] mProjectionMatrix, float[] mViewMatrix, float[] mModelMatrix) {
+    protected void load_vertices(){
+        ByteBuffer bb = ByteBuffer.allocateDirect(BYTES_PER_SQUARE);
+        bb.order(ByteOrder.nativeOrder());
+        vertexBuffer = bb.asFloatBuffer();
+        vertexBuffer.put(   new float[]{    0,              0-this.Height,
+                                            0+this.Width,   0-this.Height,
+                                            0+this.Width,   0,
+                                            0,              0               });
+        vertexBuffer.position(0);
+    }
+
+    protected void draw(float[] mProjectionMatrix, float[] mViewMatrix, float[] mModelMatrix) {
         if (!this.visible)
             return;
 
@@ -151,10 +155,90 @@ public class Sprite {
         this.posX+=this.velX*deltaTime;
         this.posY+=this.velY*deltaTime;
         if (this.isRotated)this.rotation=(this.rotation+this.rotationSpeed*deltaTime)%360.0f;
+        this.OnUpdate(deltaTime);
     }
+    //This Method is meant to be overwritten
+    public void OnUpdate(float deltaTime){}
 
     public void setVel(float velX, float velY) {
         this.velX = velX;
         this.velY = velY;
+    }
+
+    public float[] getVel(){
+        return new float[]{this.velX, this.velY};
+    }
+
+    public void setPos(float posX, float posY){
+        this.posX=posX;
+        this.posY=posY;
+    }
+
+    public float[] getPos(){
+        return new float[]{this.posX, this.posY};
+    }
+
+    public Texture getTexture() {
+        return texture;
+    }
+    public void setTexture(Texture texture) {
+        this.texture = texture;
+    }
+
+    public void setSize(float Width, float Height){
+        this.Width=Width;
+        this.Height=Height;
+        this.load_vertices();
+    }
+
+    public float[] getSize(){
+        return new float[]{this.Width, this.Height};
+    }
+
+    public void setRotation(float rotation) {
+        this.rotation = rotation;
+        if (rotationSpeed==0.0f&&this.rotation==0.0f) this.isRotated=false;
+        else this.isRotated=true;
+    }
+
+    public float getRotation() {
+        return rotation;
+    }
+
+    public void setRotationSpeed(float rotationSpeed) {
+        this.rotationSpeed = rotationSpeed;
+        if (rotationSpeed==0.0f&&this.rotation==0.0f) this.isRotated=false;
+        else this.isRotated=true;
+    }
+
+    public float getRotationSpeed() {
+        return rotationSpeed;
+    }
+
+    public void setResize(float ResizeX, float ResizeY){
+        this.ResizeX = ResizeX;
+        this.ResizeY = ResizeY;
+        if(this.ResizeX==0.0f && this.ResizeY==0.0f)this.isSized=false;
+        else this.isSized=true;
+    }
+
+    public float[] getResize(){
+        return new float[]{this.ResizeX, this.ResizeY};
+    }
+
+    public boolean isRotated() {
+        return isRotated;
+    }
+
+    public boolean isSized() {
+        return isSized;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 }
