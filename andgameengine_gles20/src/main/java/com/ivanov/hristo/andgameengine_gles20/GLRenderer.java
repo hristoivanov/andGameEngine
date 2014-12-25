@@ -5,15 +5,16 @@ package com.ivanov.hristo.andgameengine_gles20;
  */
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.opengl.GLSurfaceView.Renderer;
 
 import android.util.Log;
-
 import com.ivanov.hristo.andgameengine_gles20.util.Util;
+
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public abstract class GLRenderer implements Renderer {
     private FPSLogger fpsLogger;
@@ -27,12 +28,14 @@ public abstract class GLRenderer implements Renderer {
     private float[] mModelMatrix = new float[16];
     private float[] mViewMatrix = new float[16];
     private float[] mProjectionMatrix = new float[16];
+    private float[] mMVPMatrix = new float[16];
 
     private int mProgram_Sprite;
     private Context contxt;
 
-    /** Allocate storage for the final combined matrix. This will be passed into the shader program. */
-    private float[] mMVPMatrix = new float[16];
+    private ArrayList<Sprite> sprites;
+    private Object spritesNotInUse = new Object();
+
 
     private Sprite   mSquare1;
     private Sprite   mSquare2;
@@ -41,6 +44,8 @@ public abstract class GLRenderer implements Renderer {
         this.fpsLogger=new FPSLogger();
         this.Width=width;
         this.Height=height;
+
+        this.sprites=new ArrayList<Sprite>();
     }
 
     @Override
@@ -62,14 +67,16 @@ public abstract class GLRenderer implements Renderer {
         GLES20.glAttachShader(mProgram_Sprite, fragmentShader); // add the fragment shader to program
         GLES20.glLinkProgram(mProgram_Sprite);                  // create OpenGL program executables
 
-        Texture text1=new Texture(this.contxt, "drawable/ic_launcher");
+        this.loadTextures();
+        this.onCreate();
+        /*Texture text1=new Texture(this.contxt, "drawable/ic_launcher");
         Texture text2=new Texture(this.contxt, "drawable/nave_128");
         mSquare1   = new Sprite(mProgram_Sprite, 100.0f, 100.0f, 100.0f, 100.0f, text1);
         mSquare2   = new Sprite(mProgram_Sprite, 400.0f, 100.0f, 100.0f, 100.0f, text2);
         mSquare1.setVel(20.0f, 0.0f);
         mSquare2.setVel(-10.0f, 0.0f);
         mSquare2.isRotated=true;
-        mSquare2.rotation=20.0f;
+        mSquare2.rotation=20.0f;*/
     }
 
     @Override
@@ -78,7 +85,7 @@ public abstract class GLRenderer implements Renderer {
             Log.d(Util.LOG_TAG, "Surface changed.");
         }
 
-        GLES20.glClearColor(0.0f, 0.3f, 0.0f, 1);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1);
         GLES20.glViewport(0, 0, width, height);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -90,25 +97,66 @@ public abstract class GLRenderer implements Renderer {
         startTime = System.nanoTime();
     }
 
-
     @Override
     public void onDrawFrame(GL10 notUsed) {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         float deltaTime = (System.nanoTime()-startTime) / Nanos;
         startTime = System.nanoTime();
 
-        mSquare1.update(deltaTime);
-        mSquare2.update(deltaTime);
-        mSquare2.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
-        mSquare1.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
-
+        this.update(deltaTime);
+        this.draw(deltaTime);
 
         this.fpsLogger.logFrame();
+    }
+
+    protected void update(float deltaTime){
+            synchronized(spritesNotInUse){
+                Iterator<Sprite> it=this.sprites.iterator();
+                while(it.hasNext()){
+                    Sprite sprite=it.next();
+                    sprite.update(deltaTime);
+                }
+            }
+        this.onUpdate(deltaTime);
+    }
+
+    protected void draw(float deltaTime){
+        synchronized(spritesNotInUse){
+            Iterator<Sprite> it=this.sprites.iterator();
+            while(it.hasNext()){
+                Sprite sprite=it.next();
+                sprite.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
+            }
+        }
+    }
+
+    public void attach(Sprite sprite){
+        sprite.setmProgram(this.mProgram_Sprite);
+        synchronized(spritesNotInUse){
+            this.sprites.add(sprite);
+        }
+    }
+    public void dettach(Sprite sprite){
+        synchronized(spritesNotInUse){
+            this.sprites.remove(sprite);
+        }
     }
 
     public void setColorBackGround(float red,float green,float blue){
         GLES20.glClearColor(red, green, blue, 1);
     }
+
+    public Texture loadTexture(String file_name){
+        return new Texture(this.contxt, file_name);
+    }
+
+    /*public Sprite createSprite(float posX, float posY, float width, float height, Texture texture){
+        return new Sprite(this.mProgram_Sprite, posX, posY, width, height, texture);
+    }*/
+
+    public abstract void loadTextures();
+    public abstract void onCreate();
+    public abstract void onUpdate(float deltaTime);
 
 
     public static void checkGlError(String glOperation) {
@@ -118,10 +166,6 @@ public abstract class GLRenderer implements Renderer {
             throw new RuntimeException(glOperation + ": glError " + error);
         }
     }
-
-    public abstract void onCreate(int width, int height, boolean contextLost);
-    public abstract void onDrawFrame(boolean firstDraw);
-
 
     public static int loadShader(int type, String shaderCode){
         // create a vertex shader type (GLES20.GL_VERTEX_SHADER)

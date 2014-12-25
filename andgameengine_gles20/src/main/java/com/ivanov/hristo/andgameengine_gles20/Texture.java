@@ -21,7 +21,7 @@ public class Texture {
         int[] texturenames = new int[1];
         GLES20.glGenTextures(1, texturenames, 0);
         textureId = texturenames[0];
-        int id = this.mContext.getResources().getIdentifier(this.file_name/*"drawable/ic_launcher"*/, null, mContext.getPackageName());
+        int id = this.mContext.getResources().getIdentifier(this.file_name, null, mContext.getPackageName());
         Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(), id);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texturenames[0]);

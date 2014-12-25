@@ -49,8 +49,7 @@ public class Sprite {
     private int mProgram;
     private Texture texture;
 
-    public Sprite(int mProgram, float posX, float posY, float width, float height, Texture texture){
-        this.mProgram=mProgram;
+    public Sprite(float posX, float posY, float width, float height, Texture texture){
         this.posX = posX;
         this.posY = posY;
         this.Width = width;
@@ -73,6 +72,10 @@ public class Sprite {
                                             1.0f, 0.0f,
                                             0.0f, 0.0f});
         textureBuffer.position(0);
+    }
+
+    protected void setmProgram(int mProgram){
+        this.mProgram=mProgram;
     }
 
     protected void load_vertices(){

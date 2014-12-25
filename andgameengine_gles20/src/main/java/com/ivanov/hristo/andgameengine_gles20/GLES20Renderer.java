@@ -13,12 +13,9 @@ public class GLES20Renderer extends GLRenderer {
     }
 
     @Override
-    public void onCreate(int width, int height,boolean contextLost) {
-
-    }
-
+    public void loadTextures(){}
     @Override
-    public void onDrawFrame(boolean firstDraw) {
-
-    }
+    public void onCreate(){}
+    @Override
+    public void onUpdate(float deltaTime){}
 }
