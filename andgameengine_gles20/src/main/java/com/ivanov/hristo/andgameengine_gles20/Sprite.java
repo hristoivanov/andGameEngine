@@ -30,29 +30,40 @@ public class Sprite {
 
     protected FloatBuffer vertexBuffer;
     protected ShortBuffer drawListBuffer;
-    private final short drawOrder[] = { 0, 1, 2, 0, 2, 3 };
+    private final short drawOrder[] = { 0, 1, 2, 2, 3, 0 };
+    protected FloatBuffer textureBuffer;
 
     static final int BYTES_PER_FLOAT = 4; //COORDS come in float.
-    static final int COORDS_PER_VERTEX = 2; //TODO add more when textures implemented...
-    static final int BYTES_PER_COOR= COORDS_PER_VERTEX * BYTES_PER_FLOAT;
+    static final int COORDS_PER_VERTEX = 2;
+    static final int BYTES_PER_VERTEX = COORDS_PER_VERTEX * BYTES_PER_FLOAT;
     static final int VERTEXS_PER_SQUARE = 4;
-    static final int BYTES_PER_SQUARE = VERTEXS_PER_SQUARE * BYTES_PER_COOR;
+    static final int BYTES_PER_SQUARE = VERTEXS_PER_SQUARE * BYTES_PER_VERTEX;
     static final int BYTES_PER_SHORT = 2;
     static final int BYTES_PER_ORDER = 6 * BYTES_PER_SHORT;
 
-    public Sprite(float posX, float posY, float width, float height){
+    static final int TEX_COORDS_PER_VERTEX = 2;
+    static final int TEX_BYTES_PER_VERTEX = TEX_COORDS_PER_VERTEX * BYTES_PER_FLOAT;
+    static final int TEX_VERTEXS_PER_TEXTURE = 4;
+    static final int BYTES_PER_TEXTURE = TEX_VERTEXS_PER_TEXTURE * TEX_BYTES_PER_VERTEX;
+
+    private int mProgram;
+    private Texture texture;
+
+    public Sprite(int mProgram, float posX, float posY, float width, float height, Texture texture){
+        this.mProgram=mProgram;
         this.posX = posX;
         this.posY = posY;
         this.Width = width;
         this.Height = height;
+        this.texture=texture;
 
         ByteBuffer bb = ByteBuffer.allocateDirect(BYTES_PER_SQUARE);
         bb.order(ByteOrder.nativeOrder());
         vertexBuffer = bb.asFloatBuffer();
         vertexBuffer.put(   new float[]{    0,          0-height,
-                0+width,    0-height,
-                0+width,    0,
-                0,          0               });
+                                            0+width,    0-height,
+                                            0+width,    0,
+                                            0,          0               });
         vertexBuffer.position(0);
 
         ByteBuffer dlb = ByteBuffer.allocateDirect(BYTES_PER_ORDER);
@@ -61,23 +72,21 @@ public class Sprite {
         drawListBuffer.put(drawOrder);
         drawListBuffer.position(0);
 
-        // prepare shaders and OpenGL program
-        int vertexShader = GLRenderer.loadShader(
-                GLES20.GL_VERTEX_SHADER,
-                vertexShaderCode);
-        int fragmentShader = GLRenderer.loadShader(
-                GLES20.GL_FRAGMENT_SHADER,
-                fragmentShaderCode);
-
-        mProgram = GLES20.glCreateProgram();             // create empty OpenGL Program
-        GLES20.glAttachShader(mProgram, vertexShader);   // add the vertex shader to program
-        GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment shader to program
-        GLES20.glLinkProgram(mProgram);                  // create OpenGL program executables
+        ByteBuffer tex_bb = ByteBuffer.allocateDirect(BYTES_PER_TEXTURE);
+        tex_bb.order(ByteOrder.nativeOrder());
+        textureBuffer = tex_bb.asFloatBuffer();
+        textureBuffer.put(  new float[]{    0.0f, 1.0f,
+                                            1.0f, 1.0f,
+                                            1.0f, 0.0f,
+                                            0.0f, 0.0f});
+        textureBuffer.position(0);
     }
 
     public void draw(float[] mProjectionMatrix, float[] mViewMatrix, float[] mModelMatrix) {
         if (!this.visible)
             return;
+
+        texture.bind();
 
         Matrix.setIdentityM(mModelMatrix, 0);
         if(isRotated || isSized){
@@ -87,6 +96,7 @@ public class Sprite {
             Matrix.translateM(mModelMatrix, 0, -Width/2, +Height/2, 0.0f);}
         else{
             Matrix.translateM(mModelMatrix, 0, posX, -posY, 0.0f);}
+
 
         float[] mvpMatrix = new float[16];
         Matrix.multiplyMM(mvpMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
@@ -102,12 +112,18 @@ public class Sprite {
         GLES20.glVertexAttribPointer(
                 mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
-                BYTES_PER_COOR, vertexBuffer);
+                BYTES_PER_VERTEX, vertexBuffer);
 
         //TODO change this color shit with textures.
-        float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };
+        /*float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };
         int mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-        GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+        GLES20.glUniform4fv(mColorHandle, 1, color, 0);*/
+        int mTexCoordLoc = GLES20.glGetAttribLocation(mProgram, "a_texCoord" );
+        GLES20.glEnableVertexAttribArray ( mTexCoordLoc );
+        GLES20.glVertexAttribPointer ( mTexCoordLoc, TEX_COORDS_PER_VERTEX,
+                GLES20.GL_FLOAT, false,
+                TEX_BYTES_PER_VERTEX, textureBuffer);
+
         //TODO change this color shit with textures.
 
         int mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
@@ -117,6 +133,9 @@ public class Sprite {
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mvpMatrix, 0);
         GLRenderer.checkGlError("glUniformMatrix4fv");
 
+        int mSamplerLoc = GLES20.glGetUniformLocation (mProgram,"s_texture" );
+        GLES20.glUniform1i ( mSamplerLoc, 0);
+
         // Draw the square
         GLES20.glDrawElements(
                 GLES20.GL_TRIANGLES, drawOrder.length,
@@ -124,6 +143,7 @@ public class Sprite {
 
         // Disable vertex array
         GLES20.glDisableVertexAttribArray(mPositionHandle);
+        GLES20.glDisableVertexAttribArray(mTexCoordLoc);
     }
 
 
@@ -137,24 +157,4 @@ public class Sprite {
         this.velX = velX;
         this.velY = velY;
     }
-
-    private final int mProgram;
-    private final String vertexShaderCode =
-            // This matrix member variable provides a hook to manipulate
-            // the coordinates of the objects that use this vertex shader
-            "uniform mat4 uMVPMatrix;" +
-                    "attribute vec4 vPosition;" +
-                    "void main() {" +
-                    // The matrix must be included as a modifier of gl_Position.
-                    // Note that the uMVPMatrix factor *must be first* in order
-                    // for the matrix multiplication product to be correct.
-                    "  gl_Position = uMVPMatrix * vPosition;" +
-                    "}";
-
-    private final String fragmentShaderCode =
-            "precision mediump float;" +
-                    "uniform vec4 vColor;" +
-                    "void main() {" +
-                    "  gl_FragColor = vColor;" +
-                    "}";
 }

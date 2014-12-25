@@ -6,6 +6,7 @@ package com.ivanov.hristo.andgameengine_gles20;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.opengl.GLSurfaceView.Renderer;
@@ -23,27 +24,20 @@ public abstract class GLRenderer implements Renderer {
     private int Height;
 
 
-    /**
-     * Store the model matrix. This matrix is used to move models from object space (where each model can be thought
-     * of being located at the center of the universe) to world space.
-     */
     private float[] mModelMatrix = new float[16];
-
-    /**
-     * Store the view matrix. This can be thought of as our camera. This matrix transforms world space to eye space;
-     * it positions things relative to our eye.
-     */
     private float[] mViewMatrix = new float[16];
-
-    /** Store the projection matrix. This is used to project the scene onto a 2D viewport. */
     private float[] mProjectionMatrix = new float[16];
+
+    private int mProgram_Sprite;
+    private Context contxt;
 
     /** Allocate storage for the final combined matrix. This will be passed into the shader program. */
     private float[] mMVPMatrix = new float[16];
 
     private Sprite   mSquare1;
     private Sprite   mSquare2;
-    public GLRenderer(int width, int height) {
+    public GLRenderer(Context contxt, int width, int height) {
+        this.contxt=contxt;
         this.fpsLogger=new FPSLogger();
         this.Width=width;
         this.Height=height;
@@ -54,13 +48,27 @@ public abstract class GLRenderer implements Renderer {
         if (Util.DEBUG) {
             Log.d(Util.LOG_TAG, "Surface created.");
         }
-        mSquare1   = new Sprite(100.0f, 100.0f, 40.0f, 40.0f);
-        mSquare2   = new Sprite(400.0f, 400.0f, 40.0f, 40.0f);
+
+        // prepare shaders and OpenGL program
+        int vertexShader = GLRenderer.loadShader(
+                GLES20.GL_VERTEX_SHADER,
+                vertexShaderCode);
+        int fragmentShader = GLRenderer.loadShader(
+                GLES20.GL_FRAGMENT_SHADER,
+                fragmentShaderCode);
+
+        mProgram_Sprite = GLES20.glCreateProgram();             // create empty OpenGL Program
+        GLES20.glAttachShader(mProgram_Sprite, vertexShader);   // add the vertex shader to program
+        GLES20.glAttachShader(mProgram_Sprite, fragmentShader); // add the fragment shader to program
+        GLES20.glLinkProgram(mProgram_Sprite);                  // create OpenGL program executables
+
+        Texture text1=new Texture(this.contxt, "drawable/ic_launcher");
+        Texture text2=new Texture(this.contxt, "drawable/nave_128");
+        mSquare1   = new Sprite(mProgram_Sprite, 100.0f, 100.0f, 100.0f, 100.0f, text1);
+        mSquare2   = new Sprite(mProgram_Sprite, 400.0f, 100.0f, 100.0f, 100.0f, text2);
         mSquare1.setVel(20.0f, 0.0f);
         mSquare2.setVel(-10.0f, 0.0f);
         mSquare2.isRotated=true;
-        mSquare2.isSized=true;
-        mSquare2.ResizeX=2.0f;
         mSquare2.rotation=20.0f;
     }
 
@@ -70,11 +78,13 @@ public abstract class GLRenderer implements Renderer {
             Log.d(Util.LOG_TAG, "Surface changed.");
         }
 
-        GLES20.glClearColor(0.0f, 1.0f, 0.0f, 1);
+        GLES20.glClearColor(0.0f, 0.3f, 0.0f, 1);
         GLES20.glViewport(0, 0, width, height);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         Matrix.setLookAtM(mViewMatrix, 0, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
-        Matrix.orthoM(mProjectionMatrix, 0, 0f, this.Width, -this.Height, 0f, 1.0f, -1.0f);
+        Matrix.orthoM(mProjectionMatrix, 0, -100f, this.Width, -this.Height, 100f, 1.0f, -1.0f); //TODO  100 --> 0
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
 
         startTime = System.nanoTime();
@@ -89,8 +99,9 @@ public abstract class GLRenderer implements Renderer {
 
         mSquare1.update(deltaTime);
         mSquare2.update(deltaTime);
-        mSquare1.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
         mSquare2.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
+        mSquare1.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
+
 
         this.fpsLogger.logFrame();
     }
@@ -99,8 +110,20 @@ public abstract class GLRenderer implements Renderer {
         GLES20.glClearColor(red, green, blue, 1);
     }
 
-    public static int loadShader(int type, String shaderCode){
 
+    public static void checkGlError(String glOperation) {
+        int error;
+        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
+            Log.d("GLRenderer", glOperation + ": glError " + error);
+            throw new RuntimeException(glOperation + ": glError " + error);
+        }
+    }
+
+    public abstract void onCreate(int width, int height, boolean contextLost);
+    public abstract void onDrawFrame(boolean firstDraw);
+
+
+    public static int loadShader(int type, String shaderCode){
         // create a vertex shader type (GLES20.GL_VERTEX_SHADER)
         // or a fragment shader type (GLES20.GL_FRAGMENT_SHADER)
         int shader = GLES20.glCreateShader(type);
@@ -112,16 +135,21 @@ public abstract class GLRenderer implements Renderer {
         return shader;
     }
 
-    public static void checkGlError(String glOperation) {
-        int error;
-        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
-            Log.d("GLRenderer", glOperation + ": glError " + error);
-            throw new RuntimeException(glOperation + ": glError " + error);
-        }
-    }
+    private final String vertexShaderCode =
+                    "uniform mat4 uMVPMatrix;" +
+                    "attribute vec4 vPosition;" +
+                    "attribute vec2 a_texCoord;" +
+                    "varying vec2 v_texCoord;" +
+                    "void main() {" +
+                    "  gl_Position = uMVPMatrix * vPosition;" +
+                    "  v_texCoord = a_texCoord;" +
+                    "}";
 
-    public abstract void onCreate(int width, int height,
-                                  boolean contextLost);
-
-    public abstract void onDrawFrame(boolean firstDraw);
+    private final String fragmentShaderCode =
+                    "precision mediump float;" +
+                     "varying vec2 v_texCoord;" +
+                     "uniform sampler2D s_texture;" +
+                     "void main() {" +
+                     "  gl_FragColor = texture2D( s_texture, v_texCoord );" +
+                     "}";
 }
