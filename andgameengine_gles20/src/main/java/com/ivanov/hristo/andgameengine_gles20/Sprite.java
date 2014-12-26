@@ -112,26 +112,20 @@ public class Sprite {
 
         GLES20.glUseProgram(mProgram);
 
+        // Prepare the triangle coordinate data
         int mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
         GLES20.glEnableVertexAttribArray(mPositionHandle);
-
-        // Prepare the triangle coordinate data
         GLES20.glVertexAttribPointer(
                 mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
                 BYTES_PER_VERTEX, vertexBuffer);
 
-        //TODO change this color shit with textures.
-        /*float color[] = { 0.2f, 0.709803922f, 0.898039216f, 1.0f };
-        int mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-        GLES20.glUniform4fv(mColorHandle, 1, color, 0);*/
+        // Texture
         int mTexCoordLoc = GLES20.glGetAttribLocation(mProgram, "a_texCoord" );
         GLES20.glEnableVertexAttribArray ( mTexCoordLoc );
         GLES20.glVertexAttribPointer ( mTexCoordLoc, TEX_COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
                 TEX_BYTES_PER_VERTEX, textureBuffer);
-
-        //TODO change this color shit with textures.
 
         int mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
         GLRenderer.checkGlError("glGetUniformLocation");

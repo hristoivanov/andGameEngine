@@ -39,6 +39,8 @@ public abstract class GLRenderer implements Renderer {
     private Object spritesNotInUse = new Object();
     private ArrayList<Button> buttons;
     private Object buttonsNotInUse=new Object();
+    private ArrayList<Text> texts;
+    private Object textsNotInUse=new Object();
 
     public GLRenderer(Context contxt, int device_width, int device_height, int width, int height) {
         this.contxt=contxt;
@@ -49,6 +51,7 @@ public abstract class GLRenderer implements Renderer {
         this.deviceRelationY=((float)this.Height)/device_height;
 
         this.sprites=new ArrayList<Sprite>();
+        this.texts=new ArrayList<Text>();
         this.buttons=new ArrayList<Button>();
     }
 
@@ -132,6 +135,14 @@ public abstract class GLRenderer implements Renderer {
             }
         }
 
+        synchronized(textsNotInUse){
+            Iterator<Text> it=this.texts.iterator();
+            while(it.hasNext()){
+                Text text=it.next();
+                text.draw(mProjectionMatrix, mViewMatrix, mModelMatrix);
+            }
+        }
+
         synchronized(buttonsNotInUse){
             Iterator<Button> it=this.buttons.iterator();
             while(it.hasNext()){
@@ -176,6 +187,18 @@ public abstract class GLRenderer implements Renderer {
     public void dettach(Sprite sprite){
         synchronized(spritesNotInUse){
             this.sprites.remove(sprite);
+        }
+    }
+
+    public void attach(Text text){
+        text.setmProgram(this.mProgram_Sprite);
+        synchronized(textsNotInUse){
+            this.texts.add(text);
+        }
+    }
+    public void dettach(Text text){
+        synchronized(textsNotInUse){
+            this.texts.remove(text);
         }
     }
 
