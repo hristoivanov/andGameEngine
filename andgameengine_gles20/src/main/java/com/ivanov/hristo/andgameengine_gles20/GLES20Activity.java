@@ -95,4 +95,9 @@ public abstract class GLES20Activity extends Activity {
             mGLView.onPause();
         }
     }
+
+    @Override
+    public void onBackPressed() {
+        this.mRenderer.onBackPressed();
+    }
 }

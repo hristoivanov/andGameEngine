@@ -238,4 +238,11 @@ public class Sprite {
     public void setVisible(boolean visible) {
         this.visible = visible;
     }
+
+    public boolean isOnMe(float posX,float posY){
+        if (posX>this.posX && posY>this.posY && posX<this.posX+this.Width && posY<this.posY+this.Height){
+            return true;
+        }
+        return false;
+    }
 }

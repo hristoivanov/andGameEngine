@@ -231,12 +231,24 @@ public abstract class GLRenderer implements Renderer {
         aux.finish();
     }
 
+    public Context getContext(){
+        return this.contxt;
+    }
+
+    public int getWidth() {
+        return Width;
+    }
+    public int getHeight() {
+        return Height;
+    }
+
 
     //Methods meant to be overwritten
     public abstract void loadTextures();
     public abstract void onCreate();
     public abstract void onUpdate(float deltaTime);
-    public void onTouch(int type,float X, float Y){}
+    public void onTouch(int type,float posX, float posY){}
+    public void onBackPressed() {}
 
 
     public static void checkGlError(String glOperation) {

@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/andgameengine_gles20" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/jaukor" />
           </set>
         </option>
       </GradleProjectSettings>

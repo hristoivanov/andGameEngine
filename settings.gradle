@@ -1,1 +1,1 @@
-include ':app', ':andgameengine_gles20', ':andgameengine_gles20'
+include ':app', ':andgameengine_gles20', ':andgameengine_gles20', ':jaukor'

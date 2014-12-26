@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/andGameEngine.iml" filepath="$PROJECT_DIR$/andGameEngine.iml" />
       <module fileurl="file://$PROJECT_DIR$/andgameengine_gles20/andgameengine_gles20.iml" filepath="$PROJECT_DIR$/andgameengine_gles20/andgameengine_gles20.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jaukor/jaukor.iml" filepath="$PROJECT_DIR$/jaukor/jaukor.iml" />
     </modules>
   </component>
 </project>

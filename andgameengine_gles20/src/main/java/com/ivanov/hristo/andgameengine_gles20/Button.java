@@ -19,13 +19,6 @@ public class Button extends Sprite{
         else this.texture2=texture1;
     }
 
-    protected boolean isOnMe(float posX,float posY){
-        if (posX>this.posX && posY>this.posY && posX<this.posX+this.Width && posY<this.posY+this.Height){
-            return true;
-        }
-        return false;
-    }
-
     public boolean press(float posX, float posY){
         //Log.d("OnTouch", ""+!this.presed+"   "+isOnMe(posX,posY));
         if (!this.presed && isOnMe(posX,posY)) {
