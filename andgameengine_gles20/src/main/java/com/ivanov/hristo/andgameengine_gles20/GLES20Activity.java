@@ -23,6 +23,8 @@ public abstract class GLES20Activity extends Activity {
     private GLES20Renderer mRenderer;
     public int DeviceWidth;
     public int DeviceHeight;
+    private FileIO fileIO;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +49,7 @@ public abstract class GLES20Activity extends Activity {
                     return true;
                 }
             };
+            fileIO = new AndroidFileIO(this);
             this.loadDeviceDimensions();
             this.mRenderer=gameRenderer();
             mGLView.setEGLContextClientVersion(2);

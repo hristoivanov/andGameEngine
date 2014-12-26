@@ -5,6 +5,8 @@ package com.ivanov.hristo.andgameengine_gles20;
  */
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
@@ -41,6 +43,7 @@ public abstract class GLRenderer implements Renderer {
     private Object buttonsNotInUse=new Object();
     private ArrayList<Text> texts;
     private Object textsNotInUse=new Object();
+    public Audio audioManager;
 
     public GLRenderer(Context contxt, int device_width, int device_height, int width, int height) {
         this.contxt=contxt;
@@ -53,6 +56,7 @@ public abstract class GLRenderer implements Renderer {
         this.sprites=new ArrayList<Sprite>();
         this.texts=new ArrayList<Text>();
         this.buttons=new ArrayList<Button>();
+        this.audioManager=new AndroidAudio((Activity)this.contxt);
     }
 
     @Override
