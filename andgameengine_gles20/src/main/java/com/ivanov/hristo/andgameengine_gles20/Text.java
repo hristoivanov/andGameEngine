@@ -181,11 +181,8 @@ public class Text {
     public float getPosX() {
         return posX;
     }
-    public float getPosY() {
-        return posY;
-    }
-    public float getSize() {
-        return Size;
+    public float[] getPos(){
+        return new float[]{this.posX, this.posY};
     }
     public float getDefSizeX() {
         return DefSizeX;
@@ -199,11 +196,9 @@ public class Text {
     public int getTextLenght() {
         return TextLenght;
     }
-    public void setPosX(float posX) {
-        this.posX = posX;
-    }
-    public void setPosY(float posY) {
-        this.posY = posY;
+    public void setPos(float posX, float posY){
+        this.posX=posX;
+        this.posY=posY;
     }
     public void setSize(float size) {
         Size = size;

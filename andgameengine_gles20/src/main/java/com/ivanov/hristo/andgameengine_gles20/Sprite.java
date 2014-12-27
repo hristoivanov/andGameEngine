@@ -215,7 +215,7 @@ public class Sprite {
     public void setResize(float ResizeX, float ResizeY){
         this.ResizeX = ResizeX;
         this.ResizeY = ResizeY;
-        if(this.ResizeX==0.0f && this.ResizeY==0.0f)this.isSized=false;
+        if(this.ResizeX==1.0f && this.ResizeY==1.0f)this.isSized=false;
         else this.isSized=true;
     }
 

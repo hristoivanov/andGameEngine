@@ -231,6 +231,18 @@ public abstract class GLRenderer implements Renderer {
         aux.finish();
     }
 
+    public void clear(){
+        synchronized(spritesNotInUse){
+            this.sprites.clear();
+        }
+        synchronized(textsNotInUse){
+            this.texts.clear();
+        }
+        synchronized(buttonsNotInUse){
+            this.buttons.clear();
+        }
+    }
+
     public Context getContext(){
         return this.contxt;
     }
