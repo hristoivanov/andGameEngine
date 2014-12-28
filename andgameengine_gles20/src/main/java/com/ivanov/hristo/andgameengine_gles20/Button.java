@@ -20,7 +20,6 @@ public class Button extends Sprite{
     }
 
     public boolean press(float posX, float posY){
-        //Log.d("OnTouch", ""+!this.presed+"   "+isOnMe(posX,posY));
         if (!this.presed && isOnMe(posX,posY)) {
             this.presed = true;
             this.setTexture(this.texture2);
